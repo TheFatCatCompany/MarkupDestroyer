@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - Markup Destroyer</title>
+    <link rel="stylesheet" type="text/css" href="/static/content/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="/static/content/site.css" />
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <script src="/static/scripts/modernizr-2.6.2.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+    <script>
+        async function fetchJsonData() {
+            return fetch("/static/markups.json")
+                .then(response => {
+                    return response.json();
+                })
+        }
+
+        async function constructStateList(state)
+        {
+            debugger;
+            var markupdata = await fetchJsonData();
+            var returnList = [];
+            for (var dealer in markupdata[state]) {
+                var totalentries = 0;
+                var averageentries = 0;
+                var totalmarkup = 0;
+                for (var entry in markupdata[state][dealer]) {
+                    var thismarkup = 0;
+                    if (markupdata[state][dealer][entry][3] != "$0/No Markup!") {
+                        thismarkup = parseFloat(markupdata[state][dealer][entry][3].slice(1).replace(",", ""));
+                        totalmarkup += thismarkup;
+                        averageentries++;
+                    }
+                    totalentries++;
+                }
+                var averagemarkup = totalmarkup / averageentries;
+                var markupscore = (totalmarkup / totalentries) * averageentries;
+                returnList.push([dealer, averagemarkup, averageentries, markupscore]);
+                }
+                
+            var sorted = _.sortBy(returnList, function (s) {
+                return s[3];
+            }).reverse();
+            return sorted.slice(0, 9);
+        }
+        async function constructNationalList() {
+            var markupdata = await fetchJsonData();
+            var returnList = [];
+            for (var state in markupdata) {
+                for (var dealer in markupdata[state]) {
+                    var totalentries = 0;
+                    var averageentries = 0;
+                    var totalmarkup = 0;
+                    for (var entry in markupdata[state][dealer]) {
+                        var thismarkup = 0;
+                        if (markupdata[state][dealer][entry][3] != "$0/No Markup!") {
+                            thismarkup = parseFloat(markupdata[state][dealer][entry][3].slice(1).replace(",", ""));
+                            totalmarkup += thismarkup;
+                            averageentries++;
+                        }
+                        totalentries++;
+                    }
+                    var averagemarkup = totalmarkup / averageentries;
+                    var markupscore = (totalmarkup / totalentries) * averageentries;
+                    returnList.push([state, dealer, averagemarkup, averageentries, markupscore]);
+                }
+
+            }
+            var sorted = _.sortBy(returnList, function (s) {
+                return s[4];
+            }).reverse();
+            return sorted.slice(0, 9);
+        }
+        
+
+
+
+        function Headers(list, selector) {
+            var columns = [];
+            var header = $('<tr/>');
+
+            for (var i = 0; i < list.length; i++) {
+                var row = list[i];
+
+                for (var k in row) {
+                    if ($.inArray(k, columns) == -1) {
+                        columns.push(k);
+
+                        // Creating the header
+                        header.append($('<th/>').html(k));
+                    }
+                }
+            }
+
+            // Appending the header to the table
+            $(selector).append(header);
+            return columns;
+        }
+
+
+    </script>
+</head>
+
+<body>
+    <div class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a href="/" class="navbar-brand">Markup Destroyer</a>
+            </div>
+            <div class="navbar-collapse collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="{{ url_for('home') }}">Home</a></li>
+                    <li><a href="{{ url_for('about') }}">Hall of Shame</a></li>
+                    <li><a href="{{ url_for('search')}}">Search by Car</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="container body-content">
+        {% block content %}{% endblock %}
+        <hr />
+        <footer>
+            <p>&copy; {{ year }} - Markup Destroyer</p>
+        </footer>
+    </div>
+
+    <script src="/static/scripts/jquery-1.10.2.js"></script>
+    <script src="/static/scripts/bootstrap.js"></script>
+    <script src="/static/scripts/respond.js"></script>
+    {% block scripts %}{% endblock %}
+
+</body>
+</html>

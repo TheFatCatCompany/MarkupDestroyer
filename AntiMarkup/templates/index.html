@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="jumbotron">
+    <h1>Markup Destroyer</h1>
+    <img src="http://www.nutleykia.net/blogs/930/wp-content/uploads/2017/05/ADM-1.png" height="400" width="400" alt="Dealer_Markup_Image">
+    <p class="lead">Kill dealer markups, one report at a time.</p>
+    <p><a href="http://flask.pocoo.org/" class="btn btn-primary btn-large">Get Started &raquo;</a></p>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <h2>The Hall of Shame</h2>
+        <p>
+            Markup Destroyer can dynamically rank the top 10 worst dealerships in America (or by state!) using crowdsourced databases so you can avoid them! Give these car dealerships the hell they deserve.
+        </p>
+        <p><a class="btn btn-default" href="{{url_for('about')}}">The Hall of Shame &raquo;</a></p>
+    </div>
+    <div class="col-md-4">
+        <h2>Enter a Markup</h2>
+        <p>Find a marked up car? Tell us so everybody can point and laugh at the dealer!</p>
+        <p><a class="btn btn-default" href="{{url_for('contact')}}">Enter a Markup &raquo;</a></p>
+    </div>
+    <div class="col-md-4">
+        <h2>Search by Car</h2>
+        <p>Want a new car? See how much on average they're currently marked up across the United States.</p>
+        <p><a class="btn btn-default" href="{{url_for('search')}}">Search here &raquo;</a></p>
+    </div>
+</div>
+
+{% endblock %}

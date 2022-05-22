@@ -1,0 +1,138 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<h2>{{ title }}</h2>
+<br><br>
+<h3>{{ message }}</h3>
+<br>
+<br>
+
+<table class="w3-table-all" align="center" id="table1">
+    <tr>
+        <th>
+            Position
+        </th>
+        <th>
+            State
+        </th>
+        <th>
+            Dealer Name
+        </th>
+        <th>
+            Average Markup
+        </th>
+        <th>
+            Amount of Reported Markups
+        </th>
+    </tr>
+</table>
+<hr />
+<h3 id="stateheader">Top 10 Worst Dealers in Selected State</h3>
+<select id="stateselect" onchange="constructStateTable()" class="form-control"></select>
+<br />
+<table class="w3-table-all" align="center" id="table2">
+    <tr>
+        <th>
+            Position
+        </th>
+        <th>
+            Dealer Name
+        </th>
+        <th>
+            Average Markup
+        </th>
+        <th>
+            Amount of Reported Markups
+        </th>
+    </tr>
+</table>
+
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    var element = document.getElementById("table1");
+    var table2 = document.getElementById("table2");
+    var select = document.getElementById("stateselect");
+    var stateheader = document.getElementById("stateheader");
+    window.onload = startApp();
+    async function getStateList()
+    {
+        var markupdata = await fetchJsonData();
+        var returnlist = [];
+        for (state in markupdata)
+        {
+            returnlist.push(state);
+        }
+        return returnlist;
+    }
+    async function startApp()
+    {
+        constructNationalTable(element);
+        var stateList = await getStateList();
+        stateList.sort();
+        stateList.unshift("Selected State");
+        stateList.forEach(d => select.add(new Option(d, d)));
+    }
+    async function constructStateTable()
+    {
+        var state = select.value;
+        stateheader.innerHTML = "Top 10 Worst Dealers in " + state;
+        var lis = await constructStateList(state);
+        var selector = table2;
+        $("#table2 tr>td").remove();
+        var cols = ["Position", "Dealer Name", "Average Markup", "Amount of Reported Markups"];
+        for (var i = 0; i < lis.length; i++) {
+            var row = selector.insertRow(i + 1);
+            for (var colIndex = 0; colIndex < cols.length; colIndex++) {
+                var val = null;
+                if (colIndex == 0) {
+                    val = "#" + (i + 1).toString();
+                }
+                else if (colIndex == 2) {
+                    val = "$" + Math.round(lis[i][colIndex - 1], 2).toLocaleString();
+                }
+                else {
+                    val = lis[i][colIndex - 1];
+                }
+
+                if (val == null) val = "";
+                var cell = row.insertCell(colIndex);
+                cell.innerHTML = val.toString();
+            }
+        }
+    }
+    async function constructNationalTable(selector) {
+
+        var lis = await constructNationalList();
+        // Getting the all column names
+        var cols = ["Position", "State", "Dealer Name", "Average Markup", "Amount of Reported Markups"];
+        // Traversing the JSON data
+        for (var i = 0; i < lis.length; i++) {
+            var row = selector.insertRow(i + 1);
+            for (var colIndex = 0; colIndex < cols.length; colIndex++) {
+                var val = null;
+                if (colIndex == 0) {
+                    val = "#" + (i+1).toString();
+                }
+                else if (colIndex == 3)
+                {
+                    val = "$" + Math.round(lis[i][colIndex - 1], 2).toLocaleString();
+                }
+                else {
+                    val = lis[i][colIndex - 1];
+                }
+
+                if (val == null) val = "";
+                var cell = row.insertCell(colIndex);
+                cell.innerHTML = val.toString();
+            }
+        }
+    }
+
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,153 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<h2>{{ title }}</h2>
+<h3>{{ message }}</h3>
+
+<select id="yearselect" onchange="onYearSelect()" class="form-control" style="display: inline-block"></select>
+<select id="manufacturerselect" onchange="onManufacturerSelect()" class="form-control" style="display: none"></select>
+<select id="modelselect" onchange="onModelSelect()" class="form-control" style="display: none"></select>
+<div id="carDiv" style="display: none">
+    <h3 id="carName"></h3>
+    <div style="display: inline-block; margin-right: 20px">
+        <h4>Average Markup</h4>
+        <h5 id="averageMarkup"></h5>
+    </div>
+    <div style="display: inline-block; margin-right: 20px">
+        <h4>Maximum Markup</h4>
+        <h5 id="maximumMarkup"></h5>
+    </div>
+    <div style="display: inline-block; margin-right: 20px">
+        <h4>Total Amount in Database</h4>
+        <h5 id="databaseAmount"></h5>
+    </div>
+    <div style="display: inline-block; margin-right: 20px">
+        <h4>Amount in Database With No Markup</h4>
+        <h5 id="noMarkupAmount"></h5>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    var yearselect = document.getElementById("yearselect");
+    var manufacturerselect = document.getElementById("manufacturerselect");
+    var modelselect = document.getElementById("modelselect");
+    var cardiv = document.getElementById("carDiv");
+    var carname = document.getElementById("carName");
+    var averagemarkup = document.getElementById("averageMarkup");
+    var maxmarkup = document.getElementById("maximumMarkup");
+    var databaseamount = document.getElementById("databaseAmount");
+    var nomarkup = document.getElementById("noMarkupAmount");
+    window.onload = startApp();
+    async function startApp()
+    {
+        yearlist = await getUniqueYearsList();
+        yearlist.sort();
+        yearlist.unshift("Select Year")
+        yearlist.forEach(d => yearselect.add(new Option(d, d)));
+    }
+    async function getUniqueYearsList() {
+        var markupdata = await fetchJsonData();
+        var returnList = [];
+        for (var state in markupdata) {
+            for (var dealer in markupdata[state]) {
+                for (var entry in markupdata[state][dealer]) {
+                    if (returnList.indexOf(markupdata[state][dealer][entry][0]) == -1) {
+                        returnList.push(markupdata[state][dealer][entry][0]);
+                    }
+                }
+            }
+        }
+        return returnList;
+    }
+
+    async function onYearSelect()
+    {
+        $("#manufacturerselect").empty();
+        cardiv.style.display = "none";
+        var year = yearselect.value;
+        var markupdata = await fetchJsonData();
+        returnList = []
+        for (var state in markupdata) {
+            for (var dealer in markupdata[state]) {
+                for (var entry in markupdata[state][dealer]) {
+                    if (markupdata[state][dealer][entry][0] == year) {
+                        if (returnList.indexOf(markupdata[state][dealer][entry][1]) == -1)
+                        {
+                            returnList.push(markupdata[state][dealer][entry][1]);
+                        }
+                    }
+                }
+            }
+        }
+        manufacturerselect.style.display = "inline-block";
+        modelselect.style.display = "none";
+        returnList.sort();
+        returnList.unshift("Select Manufacturer");
+        returnList.forEach(d => manufacturerselect.add(new Option(d, d)))
+    }
+
+    async function onManufacturerSelect()
+    {
+        $("#modelselect").empty();
+        cardiv.style.display = "none";
+        var year = yearselect.value;
+        var manufacturer = manufacturerselect.value;
+        var markupdata = await fetchJsonData();
+        var returnList = [];
+        for (var state in markupdata) {
+            for (var dealer in markupdata[state]) {
+                for (var entry in markupdata[state][dealer]) {
+                    if (markupdata[state][dealer][entry][0] == year && markupdata[state][dealer][entry][1] == manufacturer) {
+                        if (returnList.indexOf(markupdata[state][dealer][entry][2]) == -1) {
+                            returnList.push(markupdata[state][dealer][entry][2]);
+                        }
+                    }
+                }
+            }
+        }
+        modelselect.style.display = "inline-block";
+        returnList.sort();
+        returnList.unshift("Select Model");
+        returnList.forEach(d => modelselect.add(new Option(d, d)))
+    }
+
+    async function onModelSelect()
+    {
+        var year = yearselect.value;
+        var manufacturer = manufacturerselect.value;
+        var model = modelselect.value;
+        var markupdata = await fetchJsonData();
+        var returnList = [];
+        for (var state in markupdata) {
+            for (var dealer in markupdata[state]) {
+                for (var entry in markupdata[state][dealer]) {
+                    if (markupdata[state][dealer][entry][0] == year && markupdata[state][dealer][entry][1] == manufacturer && markupdata[state][dealer][entry][2] == model) {
+                        var thismarkup = 0;
+                        if (markupdata[state][dealer][entry][3] != "$0/No Markup!") {
+                            thismarkup = parseFloat(markupdata[state][dealer][entry][3].slice(1).replace(",", ""));
+                        }
+                        var car = { year: markupdata[state][dealer][entry][0], manufacturer: markupdata[state][dealer][entry][1], model: markupdata[state][dealer][entry][2], markup: thismarkup }
+                        returnList.push(car);
+                    }
+                }
+            }
+        }
+        debugger;
+        var averageMarkup = _.meanBy(_.filter(returnList, function (r) { return r.markup != 0 }), function (r) {return r.markup});
+        var maxMarkup = _.maxBy(returnList, function (r) { return r.markup }).markup;
+        var amount = returnList.length;
+        var noMarkup = _.filter(returnList, function (r) { return r.markup == 0 }).length;
+        cardiv.style.display = "block";
+        carname.innerHTML = "Markup data for " + year + " " + manufacturer + " " + model + ":"
+        averagemarkup.innerHTML = "$" + Math.round(averageMarkup, 2).toLocaleString();
+        maxmarkup.innerHTML = "$" + Math.round(maxMarkup, 2).toLocaleString();
+        databaseamount.innerHTML = amount;
+        nomarkup.innerHTML = noMarkup;
+    }
+
+</script>
+{% endblock %}
